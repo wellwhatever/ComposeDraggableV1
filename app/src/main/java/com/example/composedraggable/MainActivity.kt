@@ -3,6 +3,7 @@ package com.example.composedraggable
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Card
@@ -11,9 +12,12 @@ import androidx.compose.material.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.consumeAllChanges
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -59,11 +63,63 @@ fun BoxWithDraggableCards() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Card(
+                    modifier = Modifier.size(80.dp),
+                    backgroundColor = Color.Transparent,
+                    border = BorderStroke(2.dp, Color.Red)
+                ) {
+
+                }
+            }
+            Row(
+                modifier = Modifier.padding(24.dp),
+                horizontalArrangement = Arrangement.spacedBy(48.dp)
+            ) {
+                DraggableCardView()
+                DraggableCardView()
+            }
+            Row(
+                modifier = Modifier.padding(24.dp),
+                horizontalArrangement = Arrangement.spacedBy(48.dp)
+            ) {
                 DraggableCardView()
                 DraggableCardView()
             }
         }
+    }
+}
+
+internal class DragTargetInfo {
+    var isDragging: Boolean by mutableStateOf(false)
+    var dragPosition by mutableStateOf(Offset.Zero)
+    var dragOffset by mutableStateOf(Offset.Zero)
+    var draggableComposable by mutableStateOf<(@Composable () -> Unit)?>(null)
+    var dataToDrop by mutableStateOf<Any?>(null)
+}
+
+internal val LocalDragTargetInfo = compositionLocalOf { DragTargetInfo() }
+@Composable
+fun DropTarget(
+    modifier: Modifier,
+    content: @Composable() (BoxScope.(isInBound: Boolean) -> Unit)
+) {
+
+    val dragInfo = LocalDragTargetInfo.current
+    val dragPosition = dragInfo.dragPosition
+    val dragOffset = dragInfo.dragOffset
+    var isCurrentDropTarget by remember {
+        mutableStateOf(false)
+    }
+
+    Box(modifier = modifier.onGloballyPositioned {
+        it.boundsInWindow().let { rect ->
+            isCurrentDropTarget = rect.contains(dragPosition + dragOffset)
+        }
+    }) {
     }
 }
 
